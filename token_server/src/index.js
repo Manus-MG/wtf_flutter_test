@@ -47,7 +47,8 @@ app.post('/room', async (req, res) => {
 // GET /health
 app.get('/health', (_req, res) => res.json({ ok: true }));
 
-app.listen(port, () => {
-  console.log(`[token-server] listening on http://localhost:${port}`);
+app.listen(port, '0.0.0.0', () => {
+  console.log(`[token-server] listening on 0.0.0.0:${port}`);
+  console.log(`[token-server] LAN: http://192.168.29.189:${port}`);
   console.log(`[token-server] endpoints: GET /token  POST /room  GET /health`);
 });

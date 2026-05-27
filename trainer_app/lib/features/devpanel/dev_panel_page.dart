@@ -58,7 +58,7 @@ class _DevPanelPageState extends ConsumerState<DevPanelPage> {
                 const SizedBox(height: 4),
                 const Text('App: Trainer App v0.0.1+1'),
                 const Text('Firebase: testing-6edfc'),
-                const Text('Token Server: http://10.0.2.2:3001'),
+                const Text('Token Server: http://192.168.29.189:3001'),
               ]),
             )),
           ),

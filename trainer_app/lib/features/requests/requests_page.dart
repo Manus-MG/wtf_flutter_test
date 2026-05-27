@@ -7,7 +7,7 @@ import 'package:uuid/uuid.dart';
 import 'package:wtf_shared/shared.dart';
 import '../../core/providers/app_providers.dart';
 
-const _kTokenServerUrl = 'http://10.0.2.2:3001';
+const _kTokenServerUrl = 'http://192.168.29.189:3001';
 
 class RequestsPage extends ConsumerWidget {
   const RequestsPage({super.key});

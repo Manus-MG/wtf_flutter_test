@@ -40,4 +40,24 @@ class Message {
       status: MessageStatus.values.byName(json['status'] as String),
     );
   }
+
+  Message copyWith({
+    String? id,
+    String? chatId,
+    String? senderId,
+    String? receiverId,
+    String? text,
+    DateTime? createdAt,
+    MessageStatus? status,
+  }) {
+    return Message(
+      id: id ?? this.id,
+      chatId: chatId ?? this.chatId,
+      senderId: senderId ?? this.senderId,
+      receiverId: receiverId ?? this.receiverId,
+      text: text ?? this.text,
+      createdAt: createdAt ?? this.createdAt,
+      status: status ?? this.status,
+    );
+  }
 }

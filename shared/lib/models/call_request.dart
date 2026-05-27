@@ -44,4 +44,26 @@ class CallRequest {
       declineReason: json['declineReason'] as String?,
     );
   }
+
+  CallRequest copyWith({
+    String? id,
+    String? memberId,
+    String? trainerId,
+    DateTime? requestedAt,
+    DateTime? scheduledFor,
+    String? note,
+    CallRequestStatus? status,
+    String? declineReason,
+  }) {
+    return CallRequest(
+      id: id ?? this.id,
+      memberId: memberId ?? this.memberId,
+      trainerId: trainerId ?? this.trainerId,
+      requestedAt: requestedAt ?? this.requestedAt,
+      scheduledFor: scheduledFor ?? this.scheduledFor,
+      note: note ?? this.note,
+      status: status ?? this.status,
+      declineReason: declineReason ?? this.declineReason,
+    );
+  }
 }

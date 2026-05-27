@@ -5,12 +5,16 @@ class EmptyState extends StatelessWidget {
     super.key,
     required this.title,
     required this.message,
+    this.icon,
+    this.action,
     this.actionLabel,
     this.onAction,
   });
 
   final String title;
   final String message;
+  final IconData? icon;
+  final Widget? action;
   final String? actionLabel;
   final VoidCallback? onAction;
 
@@ -22,12 +26,15 @@ class EmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.inbox_outlined, size: 56, color: Colors.grey.shade500),
+            Icon(icon ?? Icons.inbox_outlined, size: 56, color: Colors.grey.shade500),
             const SizedBox(height: 16),
             Text(title, style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 8),
             Text(message, textAlign: TextAlign.center),
-            if (actionLabel != null && onAction != null) ...[
+            if (action != null) ...[
+              const SizedBox(height: 16),
+              action!,
+            ] else if (actionLabel != null && onAction != null) ...[
               const SizedBox(height: 16),
               FilledButton(onPressed: onAction, child: Text(actionLabel!)),
             ],

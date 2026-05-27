@@ -46,4 +46,28 @@ class SessionLog {
       memberNotes: json['memberNotes'] as String?,
     );
   }
+
+  SessionLog copyWith({
+    String? id,
+    String? memberId,
+    String? trainerId,
+    DateTime? startedAt,
+    DateTime? endedAt,
+    int? durationSec,
+    int? rating,
+    String? trainerNotes,
+    String? memberNotes,
+  }) {
+    return SessionLog(
+      id: id ?? this.id,
+      memberId: memberId ?? this.memberId,
+      trainerId: trainerId ?? this.trainerId,
+      startedAt: startedAt ?? this.startedAt,
+      endedAt: endedAt ?? this.endedAt,
+      durationSec: durationSec ?? this.durationSec,
+      rating: rating ?? this.rating,
+      trainerNotes: trainerNotes ?? this.trainerNotes,
+      memberNotes: memberNotes ?? this.memberNotes,
+    );
+  }
 }

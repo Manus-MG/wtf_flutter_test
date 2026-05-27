@@ -1,17 +1,17 @@
-.dart_tool/
-.build/
-.packages
-.pub/
-coverage/
-.idea/
-.vscode/
-*.iml
-*.log
-.env
-.env.local
-.DS_Store
-build/
-node_modules/
+# Credentials - never commit
+token_server/.env
+**/google-services.json
+**/GoogleService-Info.plist
+**/.env
 
-# Flutter artifacts
-flutter_*.png
+# Flutter build
+**/build/
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/pubspec.lock
+**/.packages
+
+# Node
+node_modules/
+package-lock.json

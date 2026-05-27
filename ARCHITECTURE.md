@@ -2,25 +2,101 @@
 
 ## Overview
 
-This project is a mono-repo with:
+Mono-repo with four packages:
 
-- `guru_app/` for the member experience
-- `trainer_app/` for the trainer experience
-- `shared/` for common domain models, service abstractions, widgets, and utilities
-- `token_server/` for local 100ms token generation
+| Package | Role |
+|---|---|
+| `guru_app/` | Member (DK) Flutter app |
+| `trainer_app/` | Trainer (Aarav) Flutter app |
+| `shared/` | Domain models, service interfaces, Firebase implementations, shared widgets |
+| `token_server/` | Node.js server — generates 100ms JWTs and creates HMS rooms |
 
-## Early design decisions
+---
 
-- Shared code is isolated in a real Dart package so both apps use the same models and contracts.
-- Storage is intended to be local-first, with a lightweight live sync layer for cross-app updates.
-- The initial implementation will use mock/dev-friendly scaffolding where external credentials are not yet available.
+## Firestore Collections
 
-## Open implementation point
+```
+users/{userId}
+  id, role, name, email, assignedTrainerId?
+  isTyping, typingChatId          ← live typing state
 
-The assessment requires real-time chat and request updates across both apps while they are running. Local persistence alone is not enough, so a live sync transport still needs to be selected and implemented.
+chats/{chatId}                    ← chatId = sorted join: "user_dk_user_aarav"
+  lastMessage, lastMessageAt
+  unreadCountMember, unreadCountTrainer
 
-## 100ms approach
+chats/{chatId}/messages/{msgId}
+  id, chatId, senderId, receiverId, text, createdAt, status
 
-- Token requests will flow through `token_server/`.
-- The first pass uses a local endpoint interface so the Flutter apps can be wired before final credentials are available.
-- The final token format/SDK details should be documented once the 100ms integration is finalized.
+call_requests/{requestId}
+  id, memberId, trainerId, scheduledFor, note, status, declineReason?
+
+room_meta/{requestId}
+  id, hmsRoomId, hmsRoleMember, hmsRoleTrainer
+
+session_logs/{logId}
+  id, memberId, trainerId, startedAt, endedAt, durationSec
+  rating?, memberNotes?, trainerNotes?
+
+dev_logs/{logId}
+  id, level (info|warn|error), tag, message, createdAt
+```
+
+---
+
+## Token Server Flow
+
+```
+Trainer approves request
+  → POST http://10.0.2.2:3001/room
+      body: { name, templateId }
+  → 100ms API creates room, returns roomId
+  → trainer_app writes RoomMeta to Firestore
+
+Both apps, on PreJoinScreen:
+  → GET http://10.0.2.2:3001/token?userId=&role=&roomId=
+  → server builds HS256 JWT (jsonwebtoken, 24h expiry)
+  → Flutter app calls HMSSDK.join(config)
+```
+
+---
+
+## Provider Hierarchy (both apps)
+
+```
+firestoreProvider          → FirebaseFirestore.instance
+sharedPrefsProvider        → SharedPreferences (overridden in main)
+authServiceProvider        → FirebaseAuthService
+chatServiceProvider        → FirebaseChatService
+callServiceProvider        → FirebaseCallService
+logServiceProvider         → FirebaseLogService
+authNotifierProvider       → StateNotifierProvider<AuthNotifier, AuthState>
+currentUserProvider        → Provider<User?> (derived from authNotifierProvider)
+guruRouterProvider         → GoRouter (redirect on currentUser == null)
+```
+
+---
+
+## Call Lifecycle
+
+```
+CallPhase.idle
+  → initCall() fetches RoomMeta + JWT
+CallPhase.joining
+  → HMSSDK.join()
+CallPhase.inCall
+  → onJoin() callback; render HMSVideoView
+CallPhase.postCall
+  → onSuccess(leave) or onRemovedFromRoom()
+  → _writeSessionLog() creates SessionLog in Firestore
+  → navigate to PostCallScreen
+```
+
+---
+
+## Layer Boundaries
+
+- **Models** (`shared/lib/models/`): pure Dart, no framework imports
+- **Service interfaces** (`shared/lib/services/`): abstract classes, no Firebase
+- **Implementations** (`shared/lib/impl/`): Firestore code lives here only
+- **App providers** (`{app}/lib/core/providers/`): wire implementations to Riverpod providers
+- **Feature notifiers** (`{app}/lib/features/*/`): consume providers, no direct Firestore access

@@ -1,0 +1,74 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:wtf_shared/shared.dart';
+
+final firestoreProvider = Provider<FirebaseFirestore>((_) => FirebaseFirestore.instance);
+
+final sharedPrefsProvider = Provider<SharedPreferences>(
+  (_) => throw UnimplementedError('Override in ProviderScope'),
+);
+
+final authServiceProvider = Provider<AuthService>((ref) {
+  return FirebaseAuthService(ref.watch(sharedPrefsProvider));
+});
+
+final chatServiceProvider = Provider<FirebaseChatService>((ref) {
+  return FirebaseChatService(ref.watch(firestoreProvider));
+});
+
+final callServiceProvider = Provider<FirebaseCallService>((ref) {
+  final user = ref.watch(currentUserProvider);
+  return FirebaseCallService(
+    ref.watch(firestoreProvider),
+    currentUserId: user?.id ?? '',
+    currentUserRole: user?.role.name ?? 'trainer',
+  );
+});
+
+final logServiceProvider = Provider<FirebaseLogService>((ref) {
+  final user = ref.watch(currentUserProvider);
+  return FirebaseLogService(
+    ref.watch(firestoreProvider),
+    currentUserId: user?.id ?? '',
+  );
+});
+
+class AuthState {
+  const AuthState({this.user, this.isLoading = true, this.error});
+  final User? user;
+  final bool isLoading;
+  final String? error;
+  AuthState copyWith({User? user, bool? isLoading, String? error}) =>
+      AuthState(user: user ?? this.user, isLoading: isLoading ?? this.isLoading, error: error);
+}
+
+class AuthNotifier extends StateNotifier<AuthState> {
+  AuthNotifier(this._authService) : super(const AuthState()) {
+    _load();
+  }
+
+  final AuthService _authService;
+
+  Future<void> _load() async {
+    final user = await _authService.getCurrentUser();
+    state = AuthState(user: user, isLoading: false);
+  }
+
+  Future<void> signInAs(User user) async {
+    await _authService.saveCurrentUser(user);
+    state = AuthState(user: user, isLoading: false);
+    DevLogger.instance.log('[AUTH]', 'Trainer signed in as ${user.name}');
+  }
+
+  Future<void> signOut() async {
+    await _authService.signOut();
+    state = const AuthState(isLoading: false);
+  }
+}
+
+final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
+  return AuthNotifier(ref.watch(authServiceProvider));
+});
+
+final currentUserProvider = Provider<User?>((ref) => ref.watch(authNotifierProvider).user);

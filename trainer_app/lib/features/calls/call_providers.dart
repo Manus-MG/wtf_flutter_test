@@ -146,7 +146,11 @@ class CallNotifier extends StateNotifier<CallState>
     DevLogger.instance.log('[RTC]', 'Trainer session log written: ${log.durationSec}s');
   }
 
-  @override void onJoin({required HMSRoom room}) { DevLogger.instance.log('[RTC]', 'Trainer joined ${room.id}'); }
+  @override void onJoin({required HMSRoom room}) {
+    DevLogger.instance.log('[RTC]', 'Trainer joined ${room.id}');
+    final existing = (room.peers ?? []).where((p) => !p.isLocal).toList();
+    if (existing.isNotEmpty) state = state.copyWith(remotePeers: existing);
+  }
   @override void onPeerListUpdate({required List<HMSPeer> addedPeers, required List<HMSPeer> removedPeers}) {
     final updated = List<HMSPeer>.from(state.remotePeers);
     for (final p in removedPeers) { updated.removeWhere((e) => e.peerId == p.peerId); }
@@ -162,8 +166,14 @@ class CallNotifier extends StateNotifier<CallState>
   }
   @override void onRoomUpdate({required HMSRoom room, required HMSRoomUpdate update}) {}
   @override void onTrackUpdate({required HMSTrack track, required HMSTrackUpdate trackUpdate, required HMSPeer peer}) {
-    if (track is HMSVideoTrack && peer.isLocal && trackUpdate == HMSTrackUpdate.trackAdded) {
-      state = state.copyWith(localVideoTrack: track);
+    if (track is HMSVideoTrack && trackUpdate == HMSTrackUpdate.trackAdded) {
+      if (peer.isLocal) {
+        state = state.copyWith(localVideoTrack: track);
+      } else {
+        final updated = state.remotePeers.map((p) => p.peerId == peer.peerId ? peer : p).toList();
+        if (!updated.any((p) => p.peerId == peer.peerId)) updated.add(peer);
+        state = state.copyWith(remotePeers: updated);
+      }
     }
   }
   @override void onHMSError({required HMSException error}) { DevLogger.instance.error('[RTC]', error.message ?? ''); state = state.copyWith(error: error.message); }

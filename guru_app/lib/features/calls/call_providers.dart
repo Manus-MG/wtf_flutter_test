@@ -164,6 +164,11 @@ class CallNotifier extends StateNotifier<CallState>
   @override
   void onJoin({required HMSRoom room}) {
     DevLogger.instance.log('[RTC]', 'onJoin: ${room.id}');
+    // Populate remote peers already present in the room when we join.
+    final existing = (room.peers ?? []).where((p) => !p.isLocal).toList();
+    if (existing.isNotEmpty) {
+      state = state.copyWith(remotePeers: existing);
+    }
   }
 
   @override
@@ -194,9 +199,14 @@ class CallNotifier extends StateNotifier<CallState>
 
   @override
   void onTrackUpdate({required HMSTrack track, required HMSTrackUpdate trackUpdate, required HMSPeer peer}) {
-    if (track is HMSVideoTrack && peer.isLocal) {
-      if (trackUpdate == HMSTrackUpdate.trackAdded) {
+    if (track is HMSVideoTrack && trackUpdate == HMSTrackUpdate.trackAdded) {
+      if (peer.isLocal) {
         state = state.copyWith(localVideoTrack: track);
+      } else {
+        // Force a state update so the UI rebuilds with the remote video track.
+        final updated = state.remotePeers.map((p) => p.peerId == peer.peerId ? peer : p).toList();
+        if (!updated.any((p) => p.peerId == peer.peerId)) updated.add(peer);
+        state = state.copyWith(remotePeers: updated);
       }
     }
   }

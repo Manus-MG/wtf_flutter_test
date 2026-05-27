@@ -1,0 +1,47 @@
+enum CallRequestStatus { pending, approved, declined, cancelled }
+
+class CallRequest {
+  const CallRequest({
+    required this.id,
+    required this.memberId,
+    required this.trainerId,
+    required this.requestedAt,
+    required this.scheduledFor,
+    required this.note,
+    required this.status,
+    this.declineReason,
+  });
+
+  final String id;
+  final String memberId;
+  final String trainerId;
+  final DateTime requestedAt;
+  final DateTime scheduledFor;
+  final String note;
+  final CallRequestStatus status;
+  final String? declineReason;
+
+  Map<String, Object?> toJson() => {
+        'id': id,
+        'memberId': memberId,
+        'trainerId': trainerId,
+        'requestedAt': requestedAt.toIso8601String(),
+        'scheduledFor': scheduledFor.toIso8601String(),
+        'note': note,
+        'status': status.name,
+        'declineReason': declineReason,
+      };
+
+  factory CallRequest.fromJson(Map<String, Object?> json) {
+    return CallRequest(
+      id: json['id'] as String,
+      memberId: json['memberId'] as String,
+      trainerId: json['trainerId'] as String,
+      requestedAt: DateTime.parse(json['requestedAt'] as String),
+      scheduledFor: DateTime.parse(json['scheduledFor'] as String),
+      note: json['note'] as String,
+      status: CallRequestStatus.values.byName(json['status'] as String),
+      declineReason: json['declineReason'] as String?,
+    );
+  }
+}

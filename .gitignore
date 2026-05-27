@@ -1,0 +1,17 @@
+.dart_tool/
+.build/
+.packages
+.pub/
+coverage/
+.idea/
+.vscode/
+*.iml
+*.log
+.env
+.env.local
+.DS_Store
+build/
+node_modules/
+
+# Flutter artifacts
+flutter_*.png

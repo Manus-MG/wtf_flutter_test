@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'call_providers.dart';
 
 class PreJoinScreen extends ConsumerStatefulWidget {
@@ -15,8 +16,11 @@ class _PreJoinScreenState extends ConsumerState<PreJoinScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(callNotifierProvider.notifier).initCall(widget.requestId);
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await [Permission.camera, Permission.microphone].request();
+      if (mounted) {
+        ref.read(callNotifierProvider.notifier).initCall(widget.requestId);
+      }
     });
   }
 

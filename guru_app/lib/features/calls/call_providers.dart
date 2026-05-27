@@ -72,7 +72,7 @@ class CallNotifier extends StateNotifier<CallState>
   CallNotifier(this._ref) : super(const CallState());
 
   final Ref _ref;
-  late HMSSDK _hms;
+  HMSSDK? _hms;
   String? _currentRequestId;
 
   Future<void> initCall(String requestId) async {
@@ -105,11 +105,11 @@ class CallNotifier extends StateNotifier<CallState>
     try {
       final user = _ref.read(currentUserProvider)!;
       _hms = HMSSDK();
-      await _hms.build();
-      _hms.addUpdateListener(listener: this);
+      await _hms!.build();
+      _hms!.addUpdateListener(listener: this);
 
       final config = HMSConfig(authToken: state.token!, userName: user.name);
-      await _hms.join(config: config);
+      await _hms!.join(config: config);
       state = state.copyWith(phase: CallPhase.inCall, startedAt: DateTime.now());
       DevLogger.instance.log('[RTC]', 'Joined room');
     } catch (e) {
@@ -119,23 +119,23 @@ class CallNotifier extends StateNotifier<CallState>
   }
 
   Future<void> toggleAudio() async {
-    await _hms.toggleMicMuteState();
+    await _hms?.toggleMicMuteState();
     state = state.copyWith(isAudioMuted: !state.isAudioMuted);
   }
 
   Future<void> toggleVideo() async {
-    await _hms.toggleCameraMuteState();
+    await _hms?.toggleCameraMuteState();
     state = state.copyWith(isVideoMuted: !state.isVideoMuted);
   }
 
   Future<void> switchCamera() async {
-    await _hms.switchCamera();
+    await _hms?.switchCamera();
   }
 
   Future<void> endCall() async {
     final endedAt = DateTime.now();
     state = state.copyWith(endedAt: endedAt);
-    await _hms.leave(hmsActionResultListener: this);
+    await _hms?.leave(hmsActionResultListener: this);
   }
 
   Future<void> _writeSessionLog() async {
@@ -261,7 +261,7 @@ class CallNotifier extends StateNotifier<CallState>
   @override
   void dispose() {
     try {
-      _hms.removeUpdateListener(listener: this);
+      _hms?.removeUpdateListener(listener: this);
     } catch (_) {}
     super.dispose();
   }

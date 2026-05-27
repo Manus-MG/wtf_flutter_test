@@ -19,11 +19,16 @@ class FirebaseCallService implements CallService {
   @override
   Stream<List<CallRequest>> watchRequests() {
     final field = currentUserRole == 'trainer' ? 'trainerId' : 'memberId';
+    // Single-field where only — no composite index needed.
+    // Sort client-side to avoid (field, requestedAt) composite index.
     return _requests
         .where(field, isEqualTo: currentUserId)
-        .orderBy('requestedAt', descending: true)
         .snapshots()
-        .map((s) => s.docs.map(_fromDoc).toList());
+        .map((s) {
+      final list = s.docs.map(_fromDoc).toList();
+      list.sort((a, b) => b.requestedAt.compareTo(a.requestedAt));
+      return list;
+    });
   }
 
   @override

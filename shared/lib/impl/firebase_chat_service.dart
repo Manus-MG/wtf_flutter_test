@@ -34,7 +34,6 @@ class FirebaseChatService implements ChatService {
         'lastMessageAt': FieldValue.serverTimestamp(),
         'memberId': _memberIdFromChatId(message.chatId),
         'trainerId': _trainerIdFromChatId(message.chatId),
-        // increment unread for receiver
         _unreadKey(message.receiverId, message.chatId): FieldValue.increment(1),
       },
       SetOptions(merge: true),
@@ -44,16 +43,19 @@ class FirebaseChatService implements ChatService {
 
   @override
   Future<void> markChatAsRead(String chatId, String userId) async {
+    // Single-field where clause — no composite index needed.
+    // Filter non-read client-side to avoid isNotEqualTo index requirement.
     final snap = await _messages(chatId)
         .where('receiverId', isEqualTo: userId)
-        .where('status', isNotEqualTo: 'read')
         .get();
-    if (snap.docs.isEmpty) return;
+    final unread = snap.docs
+        .where((d) => d.data()['status'] != 'read')
+        .toList();
+    if (unread.isEmpty) return;
     final batch = _db.batch();
-    for (final doc in snap.docs) {
+    for (final doc in unread) {
       batch.update(doc.reference, {'status': 'read'});
     }
-    // reset unread counter
     batch.update(_chatDoc(chatId), {_unreadKey(userId, chatId): 0});
     await batch.commit();
   }

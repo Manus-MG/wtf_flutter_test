@@ -43,4 +43,54 @@ void main() {
 
     expect(result, isNotNull);
   });
+
+  test('Message.copyWith updates only specified fields', () {
+    final original = Message(
+      id: 'm1',
+      chatId: 'chat-1',
+      senderId: 'dk',
+      receiverId: 'aarav',
+      text: 'Hello',
+      createdAt: DateTime(2026, 5, 27),
+      status: MessageStatus.sent,
+    );
+    final updated = original.copyWith(status: MessageStatus.read);
+
+    expect(updated.id, original.id);
+    expect(updated.text, original.text);
+    expect(updated.status, MessageStatus.read);
+  });
+
+  test('CallRequest.copyWith updates status', () {
+    final req = CallRequest(
+      id: 'r1',
+      memberId: 'user_dk',
+      trainerId: 'user_aarav',
+      scheduledFor: DateTime(2026, 6, 1, 10),
+      note: 'Morning stretch',
+      status: CallRequestStatus.pending,
+      requestedAt: DateTime(2026, 5, 27),
+    );
+    final approved = req.copyWith(status: CallRequestStatus.approved);
+
+    expect(approved.status, CallRequestStatus.approved);
+    expect(approved.note, req.note);
+    expect(approved.id, req.id);
+  });
+
+  test('SessionLog.copyWith updates rating and notes', () {
+    final log = SessionLog(
+      id: 'log1',
+      memberId: 'user_dk',
+      trainerId: 'user_aarav',
+      startedAt: DateTime(2026, 5, 27, 10),
+      endedAt: DateTime(2026, 5, 27, 11),
+      durationSec: 3600,
+    );
+    final rated = log.copyWith(rating: 5, memberNotes: 'Great session');
+
+    expect(rated.rating, 5);
+    expect(rated.memberNotes, 'Great session');
+    expect(rated.durationSec, log.durationSec);
+  });
 }

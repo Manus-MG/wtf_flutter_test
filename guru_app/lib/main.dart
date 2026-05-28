@@ -6,10 +6,11 @@ import 'package:wtf_shared/shared.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'app.dart';
 import 'core/providers/app_providers.dart';
+import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   DevLogger.instance.init(FirebaseFirestore.instance);
 
   final prefs = await SharedPreferences.getInstance();

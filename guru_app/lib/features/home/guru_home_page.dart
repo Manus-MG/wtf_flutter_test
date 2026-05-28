@@ -16,8 +16,13 @@ class GuruHomePage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('Guru • ${user?.name ?? "DK"}'),
-        actions: const [
-          Padding(
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            tooltip: 'Settings',
+            onPressed: () => context.push('/settings'),
+          ),
+          const Padding(
             padding: EdgeInsets.only(right: 16),
             child: AppRoleBadge(label: 'Member', color: Color(0xFF1769E0)),
           ),
@@ -77,7 +82,8 @@ class GuruHomePage extends ConsumerWidget {
               heroTag: 'dev',
               backgroundColor: Colors.black54,
               onPressed: () => context.push('/dev-panel'),
-              child: const Text('⋮', style: TextStyle(color: Colors.white, fontSize: 20)),
+              child: const Text('⋮',
+                  style: TextStyle(color: Colors.white, fontSize: 20)),
             ),
           ),
         ],
@@ -99,7 +105,8 @@ class _UpcomingCallBanner extends StatelessWidget {
           .where('status', isEqualTo: 'approved')
           .snapshots(),
       builder: (context, snap) {
-        if (!snap.hasData || snap.data!.docs.isEmpty) return const SizedBox.shrink();
+        if (!snap.hasData || snap.data!.docs.isEmpty)
+          return const SizedBox.shrink();
         final docs = snap.data!.docs;
         // Find calls where scheduledFor is within 10 min from now or in the future
         final now = DateTime.now();
@@ -110,16 +117,20 @@ class _UpcomingCallBanner extends StatelessWidget {
         if (upcoming.isEmpty) return const SizedBox.shrink();
         final doc = upcoming.first;
         final scheduled = (doc['scheduledFor'] as Timestamp).toDate();
-        final canJoin = now.isAfter(scheduled.subtract(const Duration(minutes: 10)));
+        final canJoin =
+            now.isAfter(scheduled.subtract(const Duration(minutes: 10)));
         return Card(
           color: const Color(0xFF1769E0).withValues(alpha: 0.1),
           child: ListTile(
             leading: const Icon(Icons.videocam, color: Color(0xFF1769E0)),
             title: Text('Call on ${_fmt(scheduled)}'),
-            subtitle: canJoin ? const Text('Ready to join!') : Text('In ${_diff(scheduled, now)}'),
+            subtitle: canJoin
+                ? const Text('Ready to join!')
+                : Text('In ${_diff(scheduled, now)}'),
             trailing: canJoin
                 ? FilledButton(
-                    onPressed: () => GoRouter.of(context).push('/call/pre-join/${doc.id}'),
+                    onPressed: () =>
+                        GoRouter.of(context).push('/call/pre-join/${doc.id}'),
                     child: const Text('Join'),
                   )
                 : null,
@@ -134,13 +145,18 @@ class _UpcomingCallBanner extends StatelessWidget {
 
   String _diff(DateTime future, DateTime now) {
     final diff = future.difference(now);
-    if (diff.inHours > 0) return '${diff.inHours}h ${diff.inMinutes.remainder(60)}m';
+    if (diff.inHours > 0)
+      return '${diff.inHours}h ${diff.inMinutes.remainder(60)}m';
     return '${diff.inMinutes}m';
   }
 }
 
 class _NavCard extends StatelessWidget {
-  const _NavCard({required this.icon, required this.title, required this.subtitle, required this.onTap});
+  const _NavCard(
+      {required this.icon,
+      required this.title,
+      required this.subtitle,
+      required this.onTap});
   final IconData icon;
   final String title;
   final String subtitle;
@@ -170,8 +186,12 @@ class _NavCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
-                    Text(subtitle, style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+                    Text(title,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w600, fontSize: 15)),
+                    Text(subtitle,
+                        style: TextStyle(
+                            color: Colors.grey.shade600, fontSize: 13)),
                   ],
                 ),
               ),

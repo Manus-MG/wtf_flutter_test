@@ -1,9 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wtf_shared/shared.dart';
 
-final firestoreProvider = Provider<FirebaseFirestore>((_) => FirebaseFirestore.instance);
+final firestoreProvider =
+    Provider<FirebaseFirestore>((_) => FirebaseFirestore.instance);
 
 final sharedPrefsProvider = Provider<SharedPreferences>(
   (_) => throw UnimplementedError('Override in ProviderScope'),
@@ -13,8 +16,39 @@ final authServiceProvider = Provider<AuthService>((ref) {
   return FirebaseAuthService(ref.watch(sharedPrefsProvider));
 });
 
+final themePreferenceServiceProvider = Provider<ThemeService>((ref) {
+  return SharedPrefsThemeService(ref.watch(sharedPrefsProvider));
+});
+
+class ThemeNotifier extends StateNotifier<ThemeMode> {
+  ThemeNotifier(this._service) : super(ThemeMode.system) {
+    _load();
+  }
+
+  final ThemeService _service;
+
+  Future<void> _load() async {
+    state = await _service.loadThemeMode();
+  }
+
+  Future<void> setThemeMode(ThemeMode mode) async {
+    state = mode;
+    await _service.saveThemeMode(mode);
+  }
+}
+
+final themeNotifierProvider =
+    StateNotifierProvider<ThemeNotifier, ThemeMode>((ref) {
+  return ThemeNotifier(ref.watch(themePreferenceServiceProvider));
+});
+
 final chatServiceProvider = Provider<FirebaseChatService>((ref) {
   return FirebaseChatService(ref.watch(firestoreProvider));
+});
+
+final attachmentStorageServiceProvider =
+    Provider<AttachmentStorageService>((ref) {
+  return FirebaseAttachmentStorageService(FirebaseStorage.instance);
 });
 
 final callServiceProvider = Provider<FirebaseCallService>((ref) {
@@ -39,8 +73,10 @@ class AuthState {
   final User? user;
   final bool isLoading;
   final String? error;
-  AuthState copyWith({User? user, bool? isLoading, String? error}) =>
-      AuthState(user: user ?? this.user, isLoading: isLoading ?? this.isLoading, error: error);
+  AuthState copyWith({User? user, bool? isLoading, String? error}) => AuthState(
+      user: user ?? this.user,
+      isLoading: isLoading ?? this.isLoading,
+      error: error);
 }
 
 class AuthNotifier extends StateNotifier<AuthState> {
@@ -67,8 +103,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 }
 
-final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
+final authNotifierProvider =
+    StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   return AuthNotifier(ref.watch(authServiceProvider));
 });
 
-final currentUserProvider = Provider<User?>((ref) => ref.watch(authNotifierProvider).user);
+final currentUserProvider =
+    Provider<User?>((ref) => ref.watch(authNotifierProvider).user);

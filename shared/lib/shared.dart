@@ -1,5 +1,5 @@
-
 // Models
+export 'models/attachment.dart';
 export 'models/call_request.dart';
 export 'models/dev_log_entry.dart';
 export 'models/message.dart';
@@ -11,14 +11,18 @@ export 'models/user.dart';
 export 'services/auth_service.dart';
 export 'services/call_service.dart';
 export 'services/chat_service.dart';
+export 'services/attachment_storage_service.dart';
 export 'services/log_service.dart';
+export 'services/theme_service.dart';
 
 // Implementations
 export 'impl/dev_logger.dart';
 export 'impl/firebase_auth_service.dart';
 export 'impl/firebase_call_service.dart';
+export 'impl/firebase_attachment_storage_service.dart';
 export 'impl/firebase_chat_service.dart';
 export 'impl/firebase_log_service.dart';
+export 'impl/shared_prefs_theme_service.dart';
 export 'impl/seed_service.dart';
 
 // Utils

@@ -52,7 +52,8 @@ class _ChatPageState extends ConsumerState<ChatPage> {
 
     // Scroll to bottom on new messages
     ref.listen(messagesProvider(widget.chatId), (_, next) {
-      next.whenData((_) => WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom()));
+      next.whenData((_) => WidgetsBinding.instance
+          .addPostFrameCallback((_) => _scrollToBottom()));
     });
 
     return Scaffold(
@@ -79,7 +80,8 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                 }
                 return ListView.builder(
                   controller: _scrollController,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   itemCount: msgs.length,
                   itemBuilder: (_, i) {
                     final msg = msgs[i];
@@ -93,18 +95,20 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                 title: 'Error',
                 message: e.toString(),
                 icon: Icons.error_outline,
-                action: TextButton(onPressed: () {}, child: const Text('Retry')),
+                action:
+                    TextButton(onPressed: () {}, child: const Text('Retry')),
               ),
             ),
           ),
           // Typing indicator
           isTyping.when(
-            data: (typing) => typing ? const TypingIndicator() : const SizedBox.shrink(),
+            data: (typing) =>
+                typing ? const TypingIndicator() : const SizedBox.shrink(),
             loading: () => const SizedBox.shrink(),
             error: (_, __) => const SizedBox.shrink(),
           ),
           // Quick replies
-          if (chatState.draft.isEmpty)
+          if (chatState.draft.isEmpty && chatState.attachments.isEmpty)
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -113,7 +117,8 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                     .map((r) => Padding(
                           padding: const EdgeInsets.only(right: 8),
                           child: ActionChip(
-                            label: Text(r, style: const TextStyle(fontSize: 13)),
+                            label:
+                                Text(r, style: const TextStyle(fontSize: 13)),
                             onPressed: () => notifier.onTextChanged(r),
                           ),
                         ))
@@ -125,6 +130,10 @@ class _ChatPageState extends ConsumerState<ChatPage> {
             onTextChanged: notifier.onTextChanged,
             onSend: notifier.sendMessage,
             draft: chatState.draft,
+            attachments: chatState.attachments,
+            isSending: chatState.isSending,
+            onAttachmentsSelected: notifier.addAttachments,
+            onRemoveAttachment: notifier.removeAttachmentAt,
           ),
         ],
       ),

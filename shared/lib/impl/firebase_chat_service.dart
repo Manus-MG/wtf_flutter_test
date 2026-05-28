@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../models/attachment.dart';
 import '../models/message.dart';
 import '../services/chat_service.dart';
 
@@ -30,7 +31,7 @@ class FirebaseChatService implements ChatService {
       _chatDoc(message.chatId),
       {
         'id': message.chatId,
-        'lastMessage': message.text,
+        'lastMessage': _messageSummary(message),
         'lastMessageAt': FieldValue.serverTimestamp(),
         'memberId': _memberIdFromChatId(message.chatId),
         'trainerId': _trainerIdFromChatId(message.chatId),
@@ -45,12 +46,10 @@ class FirebaseChatService implements ChatService {
   Future<void> markChatAsRead(String chatId, String userId) async {
     // Single-field where clause — no composite index needed.
     // Filter non-read client-side to avoid isNotEqualTo index requirement.
-    final snap = await _messages(chatId)
-        .where('receiverId', isEqualTo: userId)
-        .get();
-    final unread = snap.docs
-        .where((d) => d.data()['status'] != 'read')
-        .toList();
+    final snap =
+        await _messages(chatId).where('receiverId', isEqualTo: userId).get();
+    final unread =
+        snap.docs.where((d) => d.data()['status'] != 'read').toList();
     if (unread.isEmpty) return;
     final batch = _db.batch();
     for (final doc in unread) {
@@ -74,6 +73,7 @@ class FirebaseChatService implements ChatService {
       text: d['text'] as String,
       createdAt: (d['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       status: MessageStatus.values.byName(d['status'] as String? ?? 'sent'),
+      attachments: _attachmentsFromRaw(d['attachments']),
     );
   }
 
@@ -85,7 +85,36 @@ class FirebaseChatService implements ChatService {
         'text': m.text,
         'createdAt': FieldValue.serverTimestamp(),
         'status': m.status.name,
+        'attachments': m.attachments.map((a) => a.toJson()).toList(),
       };
+
+  List<MessageAttachment> _attachmentsFromRaw(Object? raw) {
+    if (raw is! List) return const [];
+    return raw
+        .whereType<Map>()
+        .map((item) => MessageAttachment.fromJson(
+            Map<String, Object?>.from(item.cast<String, Object?>())))
+        .toList();
+  }
+
+  String _messageSummary(Message message) {
+    final text = message.text.trim();
+    if (text.isNotEmpty) return text;
+    if (message.attachments.isEmpty) return '';
+    if (message.attachments.length == 1) {
+      final attachment = message.attachments.first;
+      return attachment.isImage
+          ? 'Image: ${attachment.name}'
+          : 'File: ${attachment.name}';
+    }
+    final imageCount = message.attachments.where((a) => a.isImage).length;
+    final fileCount = message.attachments.length - imageCount;
+    final parts = <String>[];
+    if (imageCount > 0)
+      parts.add('$imageCount image${imageCount == 1 ? '' : 's'}');
+    if (fileCount > 0) parts.add('$fileCount file${fileCount == 1 ? '' : 's'}');
+    return parts.join(' • ');
+  }
 
   String _unreadKey(String userId, String chatId) {
     final parts = chatId.split('_');

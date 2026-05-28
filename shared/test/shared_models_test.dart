@@ -19,20 +19,44 @@ void main() {
   });
 
   test('Message serializes and deserializes', () {
-    final message = Message(
-      id: 'm1',
-      chatId: 'chat-1',
-      senderId: 'dk',
-      receiverId: 'aarav',
-      text: 'Hi Coach 👋',
-      createdAt: DateTime.parse('2026-05-27T10:00:00Z'),
-      status: MessageStatus.sent,
+    final attachment = MessageAttachment(
+      id: 'att-1',
+      name: 'agenda.pdf',
+      url: 'https://example.com/agenda.pdf',
+      storagePath: 'chats/chat-1/messages/m1/att-1-agenda.pdf',
+      mimeType: 'application/pdf',
+      sizeBytes: 1024,
     );
+    final message = Message(
+        id: 'm1',
+        chatId: 'chat-1',
+        senderId: 'dk',
+        receiverId: 'aarav',
+        text: 'Hi Coach 👋',
+        createdAt: DateTime.parse('2026-05-27T10:00:00Z'),
+        status: MessageStatus.sent,
+        attachments: [attachment]);
 
     final decoded = Message.fromJson(message.toJson());
 
     expect(decoded.text, message.text);
     expect(decoded.status, MessageStatus.sent);
+    expect(decoded.attachments, hasLength(1));
+    expect(decoded.attachments.first.name, attachment.name);
+  });
+
+  test('Message.fromJson tolerates missing attachments', () {
+    final decoded = Message.fromJson({
+      'id': 'm1',
+      'chatId': 'chat-1',
+      'senderId': 'dk',
+      'receiverId': 'aarav',
+      'text': 'Hello',
+      'createdAt': DateTime.parse('2026-05-27T10:00:00Z').toIso8601String(),
+      'status': 'sent',
+    });
+
+    expect(decoded.attachments, isEmpty);
   });
 
   test('validateFutureDate rejects past values', () {
